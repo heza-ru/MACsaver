@@ -49,6 +49,7 @@ class Ball: SKNode {
         let body = SKPhysicsBody(circleOfRadius: radius)
         body.isDynamic = true
         body.restitution = 0.6
+        body.friction = 0
         body.allowsRotation = false
         body.usesPreciseCollisionDetection = true
         body.contactTestBitMask = 1

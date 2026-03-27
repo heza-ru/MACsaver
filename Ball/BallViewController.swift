@@ -27,11 +27,11 @@ class BallViewController: NSViewController {
 
     var logoStyle: Ball.LogoStyle = .ball
 
-    // When true, gravity direction follows the mouse cursor position
+    // When true, gravity direction tilts based on cursor position (simulates gyro)
     var cursorGravityEnabled = false {
         didSet {
             if !cursorGravityEnabled {
-                scene.physicsWorld.gravity = CGVector(dx: 0, dy: -980)
+                scene.physicsWorld.gravity = CGVector(dx: 0, dy: -9.8)
             }
         }
     }
@@ -40,13 +40,14 @@ class BallViewController: NSViewController {
         guard cursorGravityEnabled else { return }
         let mouse = NSEvent.mouseLocation
         guard let screen = NSScreen.main else { return }
-        // Map cursor position to gravity: edges pull stronger than center
+        // -1…1 across screen axes
         let cx = (mouse.x - screen.frame.midX) / (screen.frame.width / 2)
         let cy = (mouse.y - screen.frame.midY) / (screen.frame.height / 2)
-        let strength: CGFloat = 600
+        // Tilt gravity up to ±25 horizontally, keep base -9.8 downward
+        let tilt: CGFloat = 25
         scene.physicsWorld.gravity = CGVector(
-            dx: cx * strength,
-            dy: cy * strength - 300
+            dx: cx * tilt,
+            dy: -9.8 + cy * tilt * 0.6
         )
     }
 
@@ -87,6 +88,7 @@ class BallViewController: NSViewController {
         sceneView.frame = view.bounds
         scene.physicsBody = SKPhysicsBody(edgeLoopFrom: view.bounds)
         scene.physicsBody?.contactTestBitMask = 1
+        scene.physicsBody?.friction = 0
     }
 
     // MARK: - Mouse handling
