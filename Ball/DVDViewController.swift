@@ -45,9 +45,12 @@ class DVDWindowController: NSWindowController, NSWindowDelegate {
 // MARK: - DVDViewController
 
 class DVDViewController: NSViewController {
-    let scene = SKScene(size: .init(width: 200, height: 200))
+    let scene = SKScene(size: .init(width: 100, height: 100))
     let sceneView = SKView()
     private var dvdNode: DVDNode?
+
+    // Deferred start: true when startScreensaver() was called before layout
+    private var pendingStart = false
 
     override func loadView() {
         view = NSView()
@@ -67,38 +70,62 @@ class DVDViewController: NSViewController {
 
     override func viewDidLayout() {
         super.viewDidLayout()
-        scene.size = view.bounds.size
-        sceneView.frame = view.bounds
-        scene.physicsBody = SKPhysicsBody(edgeLoopFrom: view.bounds)
-        scene.physicsBody?.contactTestBitMask = 1
+        let bounds = view.bounds
+        guard bounds.width > 0, bounds.height > 0 else { return }
+
+        scene.size = bounds.size
+        sceneView.frame = bounds
+
+        // Rebuild edge walls every layout pass
+        let body = SKPhysicsBody(edgeLoopFrom: bounds)
+        body.friction = 0
+        body.restitution = 1.0
+        body.contactTestBitMask = 1
+        scene.physicsBody = body
+
+        // Start screensaver now that we have real bounds
+        if pendingStart {
+            pendingStart = false
+            launchNode()
+        }
     }
 
     func startScreensaver() {
         stop()
+        if scene.size.width > 100 {
+            launchNode()
+        } else {
+            pendingStart = true
+        }
+    }
+
+    func stop() {
+        pendingStart = false
+        dvdNode?.removeFromParent()
+        dvdNode = nil
+    }
+
+    private func launchNode() {
+        dvdNode?.removeFromParent()
 
         let logoSize = CGSize(width: 300, height: 168)
         let node = DVDNode(size: logoSize)
         dvdNode = node
         scene.addChild(node)
 
-        let marginX = logoSize.width / 2 + 20
-        let marginY = logoSize.height / 2 + 20
-        let x = CGFloat.random(in: marginX...(max(marginX + 1, scene.size.width - marginX)))
-        let y = CGFloat.random(in: marginY...(max(marginY + 1, scene.size.height - marginY)))
+        let halfW = logoSize.width / 2
+        let halfH = logoSize.height / 2
+        let safeW = scene.size.width - logoSize.width
+        let safeH = scene.size.height - logoSize.height
+        let x = halfW + CGFloat.random(in: 0...max(1, safeW))
+        let y = halfH + CGFloat.random(in: 0...max(1, safeH))
         node.position = CGPoint(x: x, y: y)
 
         let speed: CGFloat = 220
-        let baseAngle = CGFloat.pi / 4
-        let jitter = CGFloat.random(in: -0.15...0.15)
-        let angle = baseAngle + jitter
+        let angle = CGFloat.pi / 4 + CGFloat.random(in: -0.2...0.2)
         let dx = cos(angle) * speed * (Bool.random() ? 1 : -1)
         let dy = sin(angle) * speed * (Bool.random() ? 1 : -1)
         node.physicsBody?.velocity = CGVector(dx: dx, dy: dy)
-    }
-
-    func stop() {
-        dvdNode?.removeFromParent()
-        dvdNode = nil
     }
 }
 
@@ -110,11 +137,13 @@ extension DVDViewController: SKPhysicsContactDelegate {
 
 extension DVDViewController: SKSceneDelegate {
     func update(_ currentTime: TimeInterval, for scene: SKScene) {
+        // Keep speed perfectly constant (restitution=1 can drift slightly)
         guard let body = dvdNode?.physicsBody else { return }
         let vel = body.velocity
         let currentSpeed = hypot(vel.dx, vel.dy)
         let targetSpeed: CGFloat = 220
-        if currentSpeed > 0 && abs(currentSpeed - targetSpeed) > 5 {
+        guard currentSpeed > 0 else { return }
+        if abs(currentSpeed - targetSpeed) > 2 {
             body.velocity = CGVector(
                 dx: vel.dx / currentSpeed * targetSpeed,
                 dy: vel.dy / currentSpeed * targetSpeed
@@ -146,8 +175,11 @@ class DVDNode: SKNode {
         body.angularDamping = 0
         body.allowsRotation = false
         body.friction = 0
+        body.mass = 1
         body.usesPreciseCollisionDetection = true
         body.contactTestBitMask = 1
+        body.categoryBitMask = 1
+        body.collisionBitMask = 0xFFFFFFFF
         physicsBody = body
 
         applyColor()
