@@ -42,8 +42,10 @@ class AppController {
         switch mode {
         case .ball:
             launchBall(screen: screen, cursorGravityEnabled: true, logoStyle: .ball)
-        case .dvd:
-            launchDVD()
+        case .dvdBlack:
+            launchDVD(overlay: false)
+        case .dvdOverlay:
+            launchDVD(overlay: true)
         case .freeBall:
             launchBall(screen: screen, cursorGravityEnabled: false, logoStyle: .ball)
         case .freeDVD:
@@ -56,8 +58,10 @@ class AppController {
         switch currentMode {
         case .ball, .freeBall, .freeDVD:
             dismissBall(screen: screen)
-        case .dvd:
-            dismissDVD()
+        case .dvdBlack:
+            dismissDVD(overlay: false)
+        case .dvdOverlay:
+            dismissDVD(overlay: true)
         case nil:
             break
         }
@@ -88,24 +92,24 @@ class AppController {
         }
     }
 
-    // MARK: - DVD Screensaver mode
+    // MARK: - DVD Screensaver modes
 
-    private lazy var dvdWindowController: DVDWindowController = {
-        let vc = DVDViewController()
-        return DVDWindowController(dvdViewController: vc)
-    }()
+    private lazy var dvdBlackWindowController = DVDWindowController(overlayMode: false)
+    private lazy var dvdOverlayWindowController = DVDWindowController(overlayMode: true)
 
-    private func launchDVD() {
+    private func launchDVD(overlay: Bool) {
+        let wc = overlay ? dvdOverlayWindowController : dvdBlackWindowController
         if let screen = NSScreen.main {
-            dvdWindowController.window?.setFrame(screen.frame, display: false)
+            wc.window?.setFrame(screen.frame, display: false)
         }
-        dvdWindowController.window?.setIsVisible(true)
-        dvdWindowController.dvdViewController.startScreensaver()
+        wc.window?.setIsVisible(true)
+        wc.dvdViewController.startScreensaver()
     }
 
-    private func dismissDVD() {
-        dvdWindowController.dvdViewController.stop()
-        dvdWindowController.window?.setIsVisible(false)
+    private func dismissDVD(overlay: Bool) {
+        let wc = overlay ? dvdOverlayWindowController : dvdBlackWindowController
+        wc.dvdViewController.stop()
+        wc.window?.setIsVisible(false)
     }
 
     // MARK: - Click window setup

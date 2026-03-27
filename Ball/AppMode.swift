@@ -1,8 +1,9 @@
 import Foundation
 
 enum AppMode {
-    case ball      // Ball with gyro sensing
-    case dvd       // Automatic DVD screensaver
-    case freeBall  // Interactive ball, no gyro
-    case freeDVD   // Interactive DVD logo
+    case ball        // Ball with cursor-gravity
+    case dvdBlack    // DVD screensaver, black background
+    case dvdOverlay  // DVD screensaver, transparent overlay
+    case freeBall    // Interactive ball, no gravity
+    case freeDVD     // Interactive DVD logo
 }

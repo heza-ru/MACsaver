@@ -5,8 +5,9 @@ import Cocoa
 class DVDWindowController: NSWindowController, NSWindowDelegate {
     let dvdViewController: DVDViewController
 
-    init(dvdViewController: DVDViewController) {
-        self.dvdViewController = dvdViewController
+    init(overlayMode: Bool) {
+        let vc = DVDViewController(overlayMode: overlayMode)
+        self.dvdViewController = vc
         let screen = NSScreen.main ?? NSScreen.screens[0]
         let window = NSWindow(
             contentRect: screen.frame,
@@ -14,12 +15,17 @@ class DVDWindowController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.backgroundColor = NSColor.black
-        window.isOpaque = true
+        if overlayMode {
+            window.backgroundColor = .clear
+            window.isOpaque = false
+        } else {
+            window.backgroundColor = .black
+            window.isOpaque = true
+        }
         window.level = .screenSaver
         window.ignoresMouseEvents = true
         window.isReleasedWhenClosed = false
-        window.contentViewController = dvdViewController
+        window.contentViewController = vc
         super.init(window: window)
         window.delegate = self
     }
@@ -35,6 +41,7 @@ class DVDWindowController: NSWindowController, NSWindowDelegate {
 // MARK: - DVDViewController
 
 class DVDViewController: NSViewController {
+    private let overlayMode: Bool
     private let logoView = NSImageView()
     private let logoSize = CGSize(width: 320, height: 180)
 
@@ -45,10 +52,19 @@ class DVDViewController: NSViewController {
     private var lastTick: Date?
     private var pendingStart = false
 
+    init(overlayMode: Bool) {
+        self.overlayMode = overlayMode
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
     override func loadView() {
         let v = NSView()
         v.wantsLayer = true
-        v.layer?.backgroundColor = NSColor.black.cgColor
+        if !overlayMode {
+            v.layer?.backgroundColor = NSColor.black.cgColor
+        }
         view = v
     }
 
