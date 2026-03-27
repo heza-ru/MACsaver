@@ -96,6 +96,9 @@ class AppController {
     }()
 
     private func launchDVD() {
+        if let screen = NSScreen.main {
+            dvdWindowController.window?.setFrame(screen.frame, display: false)
+        }
         dvdWindowController.window?.setIsVisible(true)
         dvdWindowController.dvdViewController.startScreensaver()
     }

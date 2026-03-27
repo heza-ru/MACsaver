@@ -1,5 +1,4 @@
 import Cocoa
-import SpriteKit
 
 // MARK: - DVDWindowController
 
@@ -15,11 +14,10 @@ class DVDWindowController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.backgroundColor = NSColor.clear
-        window.isOpaque = false
+        window.backgroundColor = NSColor.black
+        window.isOpaque = true
         window.level = .screenSaver
         window.ignoresMouseEvents = true
-        window.acceptsMouseMovedEvents = false
         window.isReleasedWhenClosed = false
         window.contentViewController = dvdViewController
         super.init(window: window)
@@ -29,14 +27,6 @@ class DVDWindowController: NSWindowController, NSWindowDelegate {
     required init?(coder: NSCoder) { fatalError() }
 
     func windowDidChangeScreen(_ notification: Notification) {
-        updateWindowSize()
-    }
-
-    func windowDidChangeScreenProfile(_ notification: Notification) {
-        updateWindowSize()
-    }
-
-    private func updateWindowSize() {
         guard let screen = window?.screen else { return }
         window?.setFrame(screen.frame, display: true)
     }
@@ -45,55 +35,59 @@ class DVDWindowController: NSWindowController, NSWindowDelegate {
 // MARK: - DVDViewController
 
 class DVDViewController: NSViewController {
-    let scene = SKScene(size: .init(width: 100, height: 100))
-    let sceneView = SKView()
-    private var dvdNode: DVDNode?
+    private let logoView = NSImageView()
+    private let logoSize = CGSize(width: 320, height: 180)
 
-    // Deferred start: true when startScreensaver() was called before layout
+    private var pos = CGPoint.zero
+    private var vel = CGPoint.zero
+    private var currentHue: CGFloat = 0
+    private var timer: Timer?
+    private var lastTick: Date?
     private var pendingStart = false
 
     override func loadView() {
-        view = NSView()
+        let v = NSView()
+        v.wantsLayer = true
+        v.layer?.backgroundColor = NSColor.black.cgColor
+        view = v
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.addSubview(sceneView)
-        sceneView.presentScene(scene)
-        scene.backgroundColor = NSColor.clear
-        sceneView.allowsTransparency = true
-        sceneView.preferredFramesPerSecond = 120
-        scene.physicsWorld.gravity = .zero
-        scene.physicsWorld.contactDelegate = self
-        scene.delegate = self
+
+        logoView.imageScaling = .scaleProportionallyUpOrDown
+        logoView.wantsLayer = true
+
+        // Load DVD logo; mark as template so contentTintColor applies
+        if let img = NSImage(named: "DVD_logo") {
+            let t = img.copy() as! NSImage
+            t.isTemplate = true
+            logoView.image = t
+        } else {
+            // Fallback: white "DVD" label
+            logoView.image = makeFallbackImage()
+        }
+
+        view.addSubview(logoView)
+        currentHue = CGFloat.random(in: 0...1)
+        applyColor()
     }
 
     override func viewDidLayout() {
         super.viewDidLayout()
-        let bounds = view.bounds
-        guard bounds.width > 0, bounds.height > 0 else { return }
-
-        scene.size = bounds.size
-        sceneView.frame = bounds
-
-        // Rebuild edge walls every layout pass
-        let body = SKPhysicsBody(edgeLoopFrom: bounds)
-        body.friction = 0
-        body.restitution = 1.0
-        body.contactTestBitMask = 1
-        scene.physicsBody = body
-
-        // Start screensaver now that we have real bounds
-        if pendingStart {
-            pendingStart = false
-            launchNode()
-        }
+        guard view.bounds.width > 0, pendingStart else { return }
+        pendingStart = false
+        beginAnimation()
     }
 
+    // MARK: - Public
+
     func startScreensaver() {
-        stop()
-        if scene.size.width > 100 {
-            launchNode()
+        stopAnimation()
+        currentHue = CGFloat.random(in: 0...1)
+        applyColor()
+        if view.bounds.width > 0 {
+            beginAnimation()
         } else {
             pendingStart = true
         }
@@ -101,101 +95,96 @@ class DVDViewController: NSViewController {
 
     func stop() {
         pendingStart = false
-        dvdNode?.removeFromParent()
-        dvdNode = nil
+        stopAnimation()
     }
 
-    private func launchNode() {
-        dvdNode?.removeFromParent()
+    // MARK: - Animation
 
-        let logoSize = CGSize(width: 300, height: 168)
-        let node = DVDNode(size: logoSize)
-        dvdNode = node
-        scene.addChild(node)
+    private func beginAnimation() {
+        let bounds = view.bounds
+        let hw = logoSize.width / 2, hh = logoSize.height / 2
 
-        let halfW = logoSize.width / 2
-        let halfH = logoSize.height / 2
-        let safeW = scene.size.width - logoSize.width
-        let safeH = scene.size.height - logoSize.height
-        let x = halfW + CGFloat.random(in: 0...max(1, safeW))
-        let y = halfH + CGFloat.random(in: 0...max(1, safeH))
-        node.position = CGPoint(x: x, y: y)
+        pos = CGPoint(
+            x: bounds.width  > logoSize.width  ? CGFloat.random(in: hw ..< bounds.width  - hw) : bounds.midX,
+            y: bounds.height > logoSize.height ? CGFloat.random(in: hh ..< bounds.height - hh) : bounds.midY
+        )
 
+        // ~27° angle gives the satisfying DVD bounce pattern
         let speed: CGFloat = 220
-        let angle = CGFloat.pi / 4 + CGFloat.random(in: -0.2...0.2)
-        let dx = cos(angle) * speed * (Bool.random() ? 1 : -1)
-        let dy = sin(angle) * speed * (Bool.random() ? 1 : -1)
-        node.physicsBody?.velocity = CGVector(dx: dx, dy: dy)
-    }
-}
+        let angle: CGFloat = 0.47 + CGFloat.random(in: -0.15 ... 0.15)
+        vel = CGPoint(
+            x: cos(angle) * speed * (Bool.random() ? 1 : -1),
+            y: sin(angle) * speed * (Bool.random() ? 1 : -1)
+        )
 
-extension DVDViewController: SKPhysicsContactDelegate {
-    func didBegin(_ contact: SKPhysicsContact) {
-        dvdNode?.advanceColor()
-    }
-}
-
-extension DVDViewController: SKSceneDelegate {
-    func update(_ currentTime: TimeInterval, for scene: SKScene) {
-        // Keep speed perfectly constant (restitution=1 can drift slightly)
-        guard let body = dvdNode?.physicsBody else { return }
-        let vel = body.velocity
-        let currentSpeed = hypot(vel.dx, vel.dy)
-        let targetSpeed: CGFloat = 220
-        guard currentSpeed > 0 else { return }
-        if abs(currentSpeed - targetSpeed) > 2 {
-            body.velocity = CGVector(
-                dx: vel.dx / currentSpeed * targetSpeed,
-                dy: vel.dy / currentSpeed * targetSpeed
-            )
+        updateLogoFrame()
+        lastTick = Date()
+        timer = Timer.scheduledTimer(withTimeInterval: 1 / 60.0, repeats: true) { [weak self] _ in
+            self?.tick()
         }
     }
-}
 
-// MARK: - DVDNode
-
-class DVDNode: SKNode {
-    private let logoSprite: SKSpriteNode
-    private var currentHue: CGFloat = CGFloat.random(in: 0...1)
-
-    init(size: CGSize) {
-        if NSImage(named: "DVD_logo") != nil {
-            logoSprite = SKSpriteNode(imageNamed: "DVD_logo")
-        } else {
-            logoSprite = SKSpriteNode(color: .white, size: size)
-        }
-        logoSprite.size = size
-        super.init()
-        addChild(logoSprite)
-
-        let body = SKPhysicsBody(rectangleOf: size)
-        body.isDynamic = true
-        body.restitution = 1.0
-        body.linearDamping = 0
-        body.angularDamping = 0
-        body.allowsRotation = false
-        body.friction = 0
-        body.mass = 1
-        body.usesPreciseCollisionDetection = true
-        body.contactTestBitMask = 1
-        body.categoryBitMask = 1
-        body.collisionBitMask = 0xFFFFFFFF
-        physicsBody = body
-
-        applyColor()
+    private func stopAnimation() {
+        timer?.invalidate()
+        timer = nil
     }
 
-    required init?(coder aDecoder: NSCoder) { fatalError() }
+    private func tick() {
+        guard let last = lastTick else { return }
+        let now = Date()
+        let dt = min(CGFloat(now.timeIntervalSince(last)), 1 / 30.0)
+        lastTick = now
 
-    func advanceColor() {
-        currentHue += 0.16
-        if currentHue >= 1.0 { currentHue -= 1.0 }
-        applyColor()
+        let bounds = view.bounds
+        guard bounds.width > 0, bounds.height > 0 else { return }
+
+        pos.x += vel.x * dt
+        pos.y += vel.y * dt
+
+        var bounced = false
+        let hw = logoSize.width / 2, hh = logoSize.height / 2
+
+        if pos.x < hw                   { pos.x = hw;                   vel.x =  abs(vel.x); bounced = true }
+        if pos.x > bounds.width  - hw   { pos.x = bounds.width  - hw;   vel.x = -abs(vel.x); bounced = true }
+        if pos.y < hh                   { pos.y = hh;                   vel.y =  abs(vel.y); bounced = true }
+        if pos.y > bounds.height - hh   { pos.y = bounds.height - hh;   vel.y = -abs(vel.y); bounced = true }
+
+        if bounced {
+            currentHue = (currentHue + 0.16).truncatingRemainder(dividingBy: 1.0)
+            applyColor()
+        }
+
+        updateLogoFrame()
+    }
+
+    private func updateLogoFrame() {
+        logoView.frame = CGRect(
+            x: pos.x - logoSize.width  / 2,
+            y: pos.y - logoSize.height / 2,
+            width:  logoSize.width,
+            height: logoSize.height
+        )
     }
 
     private func applyColor() {
-        let color = NSColor(hue: currentHue, saturation: 1.0, brightness: 1.0, alpha: 1.0)
-        logoSprite.color = color
-        logoSprite.colorBlendFactor = 0.85
+        logoView.contentTintColor = NSColor(hue: currentHue, saturation: 1, brightness: 1, alpha: 1)
+    }
+
+    // Fallback when asset isn't in the bundle
+    private func makeFallbackImage() -> NSImage {
+        let img = NSImage(size: logoSize)
+        img.lockFocus()
+        NSColor.white.setFill()
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.boldSystemFont(ofSize: 80),
+            .foregroundColor: NSColor.white
+        ]
+        let str = "DVD" as NSString
+        let sz = str.size(withAttributes: attrs)
+        str.draw(at: CGPoint(x: (logoSize.width - sz.width) / 2, y: (logoSize.height - sz.height) / 2),
+                 withAttributes: attrs)
+        img.unlockFocus()
+        img.isTemplate = true
+        return img
     }
 }
