@@ -1,13 +1,20 @@
 import SpriteKit
 
 class Ball: SKNode {
+    enum LogoStyle {
+        case ball
+        case dvd
+    }
+
     let id: String
 
     private let imgOffsetContainer = SKNode()
     /**/ private let imgRotationContainer = SKNode()
-    /****/ private let img = SKSpriteNode(imageNamed: "Ball")
+    /****/ private let img: SKSpriteNode
 
     let radius: CGFloat
+    private let logoStyle: LogoStyle
+    private var dvdHue: CGFloat = CGFloat.random(in: 0...1)
 
 //    let view: NSHostingView<BallView<Circle>>
     private let shadowSprite = SKSpriteNode(imageNamed: "ContactShadow")
@@ -24,11 +31,18 @@ class Ball: SKNode {
         }
     }
 
-    init(radius: CGFloat, pos: CGPoint, id: String) {
-//        self.view = NSHostingView(rootView: BallView(shape: Circle(), radius: radius, color: Color(hex: 0xF84E35)))
-//        self.view.frame = CGRect(x: 0, y: 0, width: radius * 2, height: radius * 2)
+    init(radius: CGFloat, pos: CGPoint, id: String, logoStyle: LogoStyle = .ball) {
         self.id = id
         self.radius = radius
+        self.logoStyle = logoStyle
+        switch logoStyle {
+        case .ball:
+            img = SKSpriteNode(imageNamed: "Ball")
+        case .dvd:
+            img = NSImage(named: "DVD_logo") != nil
+                ? SKSpriteNode(imageNamed: "DVD_logo")
+                : SKSpriteNode(color: .white, size: CGSize(width: radius * 3, height: radius * 1.7))
+        }
         super.init()
         self.position = pos
 
@@ -50,7 +64,13 @@ class Ball: SKNode {
         addChild(imgOffsetContainer)
         imgOffsetContainer.addChild(imgRotationContainer)
 
-        img.size = CGSize(width: radius * 2, height: radius * 2)
+        switch logoStyle {
+        case .ball:
+            img.size = CGSize(width: radius * 2, height: radius * 2)
+        case .dvd:
+            img.size = CGSize(width: radius * 3, height: radius * 1.7)
+            applyDVDColor()
+        }
         imgRotationContainer.addChild(img)
 //        img.alpha = 0.01
     }
@@ -88,12 +108,16 @@ class Ball: SKNode {
         imgRotationContainer.zRotation = angle
         img.zRotation = -angle
 
-        let targetScale = remap(x: strength, domainStart: 0, domainEnd: 1, rangeStart: 1, rangeEnd: 0.8)
-        let velocity = remap(x: strength, domainStart: 0, domainEnd: 1, rangeStart: -5, rangeEnd: -10)
-//        squish.animate(toValue: targetScale, velocity: velocity, completion: nil)
+        if logoStyle == .dvd {
+            dvdHue += 0.16
+            if dvdHue >= 1.0 { dvdHue -= 1.0 }
+            applyDVDColor()
+        }
+    }
 
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-//            self.squish.animate(toValue: 1, velocity: self.squish.velocity, completion: nil)
-//        }
+    private func applyDVDColor() {
+        let color = NSColor(hue: dvdHue, saturation: 1.0, brightness: 1.0, alpha: 1.0)
+        img.color = color
+        img.colorBlendFactor = 0.85
     }
 }

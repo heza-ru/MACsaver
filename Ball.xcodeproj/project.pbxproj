@@ -26,6 +26,10 @@
 		5F736CA7298226FF00997B93 /* MomentumValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F736CA6298226FF00997B93 /* MomentumValue.swift */; };
 		5F736CAA2982271A00997B93 /* Motion in Frameworks */ = {isa = PBXBuildFile; productRef = 5F736CA92982271A00997B93 /* Motion */; };
 		5F736CAC2982276200997B93 /* Ball.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F736CAB2982276200997B93 /* Ball.swift */; };
+		AABB0002000000000000AAAA /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AABB0001000000000000AAAA /* CoreMotion.framework */; };
+		AABB0004000000000000AAAA /* AppMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0003000000000000AAAA /* AppMode.swift */; };
+		AABB0006000000000000AAAA /* ModePickerWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0005000000000000AAAA /* ModePickerWindowController.swift */; };
+		AABB0008000000000000AAAA /* DVDViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0007000000000000AAAA /* DVDViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +54,10 @@
 		5F736CA4298214FE00997B93 /* InnerShadow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InnerShadow.swift; sourceTree = "<group>"; };
 		5F736CA6298226FF00997B93 /* MomentumValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentumValue.swift; sourceTree = "<group>"; };
 		5F736CAB2982276200997B93 /* Ball.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ball.swift; sourceTree = "<group>"; };
+		AABB0001000000000000AAAA /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
+		AABB0003000000000000AAAA /* AppMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMode.swift; sourceTree = "<group>"; };
+		AABB0005000000000000AAAA /* ModePickerWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModePickerWindowController.swift; sourceTree = "<group>"; };
+		AABB0007000000000000AAAA /* DVDViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DVDViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +65,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AABB0002000000000000AAAA /* CoreMotion.framework in Frameworks */,
 				5F736CAA2982271A00997B93 /* Motion in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -69,6 +78,7 @@
 			children = (
 				5F4617B3297E1747005A09A6 /* Ball */,
 				5F4617B2297E1747005A09A6 /* Products */,
+				96D2189F2F76CB24008C4B75 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -86,7 +96,10 @@
 				5F4617C5297E2B8F005A09A6 /* Info.plist */,
 				5F4617B4297E1747005A09A6 /* AppDelegate.swift */,
 				5F4617D7297F6BFD005A09A6 /* AppController.swift */,
+				AABB0003000000000000AAAA /* AppMode.swift */,
 				5F4617B6297E1747005A09A6 /* BallViewController.swift */,
+				AABB0005000000000000AAAA /* ModePickerWindowController.swift */,
+				AABB0007000000000000AAAA /* DVDViewController.swift */,
 				5F736CAB2982276200997B93 /* Ball.swift */,
 				5F4617C3297E17D8005A09A6 /* BallWindowController.swift */,
 				5F4617D9297F6E59005A09A6 /* MouseCatcherView.swift */,
@@ -105,6 +118,14 @@
 				5F4617BD297E1748005A09A6 /* Ball.entitlements */,
 			);
 			path = Ball;
+			sourceTree = "<group>";
+		};
+		96D2189F2F76CB24008C4B75 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				AABB0001000000000000AAAA /* CoreMotion.framework */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -187,6 +208,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AABB0004000000000000AAAA /* AppMode.swift in Sources */,
+				AABB0006000000000000AAAA /* ModePickerWindowController.swift in Sources */,
+				AABB0008000000000000AAAA /* DVDViewController.swift in Sources */,
 				5F736CAC2982276200997B93 /* Ball.swift in Sources */,
 				5F736CA32982144000997B93 /* BallView.swift in Sources */,
 				5F4617C7297E2C03005A09A6 /* DockUtils.swift in Sources */,
@@ -338,7 +362,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VPN8ZW6EAC;
+				DEVELOPMENT_TEAM = 8YLQQX45SM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Ball/Info.plist;
@@ -366,7 +390,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VPN8ZW6EAC;
+				DEVELOPMENT_TEAM = 8YLQQX45SM;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Ball/Info.plist;

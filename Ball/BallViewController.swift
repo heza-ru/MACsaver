@@ -1,6 +1,7 @@
 import Cocoa
 import SpriteKit
 import SwiftUI
+import CoreMotion
 
 protocol BallViewControllerDelegate: AnyObject {
     func ballViewController(_ vc: BallViewController, ballDidMoveToPosition pos: CGRect)
@@ -24,6 +25,35 @@ class BallViewController: NSViewController {
     }
 
     private var tempOverrideMouseCatcherRect: CGRect?
+
+    var logoStyle: Ball.LogoStyle = .ball
+    var gyroEnabled = false {
+        didSet {
+            if gyroEnabled { startGyro() } else { stopGyro() }
+        }
+    }
+    private var motionManager: CMMotionManager?
+
+    private func startGyro() {
+        let manager = CMMotionManager()
+        guard manager.isAccelerometerAvailable else { return }
+        motionManager = manager
+        manager.accelerometerUpdateInterval = 1.0 / 60.0
+        manager.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
+            guard let data, let self else { return }
+            let strength: CGFloat = 980
+            self.scene.physicsWorld.gravity = CGVector(
+                dx: CGFloat(data.acceleration.x) * strength,
+                dy: CGFloat(data.acceleration.y) * strength
+            )
+        }
+    }
+
+    private func stopGyro() {
+        motionManager?.stopAccelerometerUpdates()
+        motionManager = nil
+        scene.physicsWorld.gravity = CGVector(dx: 0, dy: -980)
+    }
 
     var ball: Ball? {
         didSet(old) {
@@ -158,7 +188,7 @@ class BallViewController: NSViewController {
         var targetRect = rect
         targetRect = targetRect.byConstraining(withinBounds: screen.frame)
 
-        let ball = Ball(radius: Constants.radius, pos: .init(x: targetRect.midX, y: targetRect.midY), id: UUID().uuidString)
+        let ball = Ball(radius: Constants.radius, pos: .init(x: targetRect.midX, y: targetRect.midY), id: UUID().uuidString, logoStyle: logoStyle)
         self.ball = ball
 
         dragState = nil

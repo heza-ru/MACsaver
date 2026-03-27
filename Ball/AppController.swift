@@ -12,16 +12,108 @@ class AppController {
         setupClickWindow()
     }
 
+    // MARK: - Mode management
+
+    private var currentMode: AppMode?
+    private let modePicker = ModePickerWindowController()
+
+    func dockIconClicked() {
+        guard let screen = NSScreen.main else { return }
+
+        if currentMode != nil {
+            dismissCurrentMode(screen: screen)
+            return
+        }
+
+        if modePicker.isShowing {
+            modePicker.dismiss()
+            return
+        }
+
+        modePicker.onSelect = { [weak self] mode in
+            self?.modePicker.dismiss()
+            self?.launch(mode: mode, screen: screen)
+        }
+        modePicker.show(near: screen.inferredRectOfHoveredDockIcon)
+    }
+
+    private func launch(mode: AppMode, screen: NSScreen) {
+        currentMode = mode
+        switch mode {
+        case .ball:
+            launchBall(screen: screen, gyroEnabled: true, logoStyle: .ball)
+        case .dvd:
+            launchDVD()
+        case .freeBall:
+            launchBall(screen: screen, gyroEnabled: false, logoStyle: .ball)
+        case .freeDVD:
+            launchBall(screen: screen, gyroEnabled: false, logoStyle: .dvd)
+        }
+        showPutBackIcon = true
+    }
+
+    private func dismissCurrentMode(screen: NSScreen) {
+        switch currentMode {
+        case .ball, .freeBall, .freeDVD:
+            dismissBall(screen: screen)
+        case .dvd:
+            dismissDVD()
+        case nil:
+            break
+        }
+        currentMode = nil
+        showPutBackIcon = false
+    }
+
+    // MARK: - Ball / Free modes
+
+    private func launchBall(screen: NSScreen, gyroEnabled: Bool, logoStyle: Ball.LogoStyle) {
+        _ = ballViewController.view
+        ballViewController.gyroEnabled = gyroEnabled
+        ballViewController.logoStyle = logoStyle
+        ballViewController.animateBallFromRect(screen.inferredRectOfHoveredDockIcon)
+
+        ballWindowController.window!.setIsVisible(true)
+        clickWindow.setIsVisible(true)
+        ballViewController.sceneView.isPaused = false
+        updateClickWindowPosition()
+    }
+
+    private func dismissBall(screen: NSScreen) {
+        ballViewController.animatePutBack(rect: screen.inferredRectOfHoveredDockIcon) {
+            self.ballWindowController.window!.setIsVisible(false)
+            self.clickWindow.setIsVisible(false)
+            self.ballViewController.sceneView.isPaused = true
+            self.ballViewController.gyroEnabled = false
+        }
+    }
+
+    // MARK: - DVD Screensaver mode
+
+    private lazy var dvdWindowController: DVDWindowController = {
+        let vc = DVDViewController()
+        return DVDWindowController(dvdViewController: vc)
+    }()
+
+    private func launchDVD() {
+        dvdWindowController.window?.setIsVisible(true)
+        dvdWindowController.dvdViewController.startScreensaver()
+    }
+
+    private func dismissDVD() {
+        dvdWindowController.dvdViewController.stop()
+        dvdWindowController.window?.setIsVisible(false)
+    }
+
+    // MARK: - Click window setup
+
     private func setupClickWindow() {
-        //        clickWindow.contentViewController = NSViewController()
         let catcher = MouseCatcherView()
         clickWindow.contentView = catcher
         catcher.frame = CGRect(x: 0, y: 0, width: Constants.radius * 2, height: Constants.radius * 2)
         catcher.wantsLayer = true
-        // This is needed so that the window accepts mouse events
         catcher.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.01).cgColor
         catcher.layer?.cornerRadius = Constants.radius
-
 
         catcher.onMouseDown = { [weak self] in self?.ballViewController.onMouseDown() }
         catcher.onMouseDrag = { [weak self] in self?.ballViewController.onMouseDrag() }
@@ -29,41 +121,8 @@ class AppController {
         catcher.onScroll = { [weak self] in self?.ballViewController.onScroll(event: $0) }
     }
 
-    // MARK: - External actions
-    func dockIconClicked() {
-        guard let screen = NSScreen.main else { return }
+    // MARK: - Windows
 
-        if ballVisible {
-            self.ballViewController.animatePutBack(rect: screen.inferredRectOfHoveredDockIcon) {
-                self.ballVisible = false
-            }
-            return
-        }
-
-        _ = ballViewController.view
-
-        self.ballViewController.animateBallFromRect(screen.inferredRectOfHoveredDockIcon)
-        self.ballVisible = true
-    }
-
-    // MARK: - State
-    private var ballVisible = false {
-        didSet(old) {
-            guard ballVisible != old else { return }
-
-            ballWindowController.window!.setIsVisible(ballVisible)
-            clickWindow.setIsVisible(ballVisible)
-
-            ballViewController.sceneView.isPaused = !ballVisible
-            showPutBackIcon = ballVisible
-
-            if ballVisible {
-                updateClickWindowPosition()
-            }
-        }
-    }
-
-    // MARK - Windows
     fileprivate let ballWindowController = NSStoryboard(name: "Main", bundle: nil).instantiateController(withIdentifier: "Main") as! BallWindowController
     fileprivate var ballViewController: BallViewController {
         ballWindowController.window!.contentViewController as! BallViewController
@@ -77,12 +136,13 @@ class AppController {
             defer: false
         )
         clickWindow.isReleasedWhenClosed = false
-        clickWindow.level = .screenSaver // ?
+        clickWindow.level = .screenSaver
         clickWindow.backgroundColor = NSColor.clear
         return clickWindow
     }()
 
     // MARK: - Dock icon
+
     private var showPutBackIcon = false {
         didSet {
             if showPutBackIcon {
@@ -102,11 +162,10 @@ extension AppController: BallViewControllerDelegate {
     }
 
     fileprivate func updateClickWindowPosition() {
-        guard ballVisible, var rect = ballViewController.targetMouseCatcherRect else { return }
+        guard currentMode != nil, var rect = ballViewController.targetMouseCatcherRect else { return }
         let rounding: CGFloat = 10
         rect.origin.x = round(rect.minX / rounding) * rounding
         rect.origin.y = round(rect.minY / rounding) * rounding
-        // HACK: Assume scene coords are same as window coords
         guard let window = self.ballWindowController.window, let screen = window.screen else { return }
         rect = rect.byConstraining(withinBounds: screen.frame)
         clickWindow.setFrame(rect, display: false)
