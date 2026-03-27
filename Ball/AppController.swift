@@ -41,13 +41,13 @@ class AppController {
         currentMode = mode
         switch mode {
         case .ball:
-            launchBall(screen: screen, gyroEnabled: true, logoStyle: .ball)
+            launchBall(screen: screen, cursorGravityEnabled: true, logoStyle: .ball)
         case .dvd:
             launchDVD()
         case .freeBall:
-            launchBall(screen: screen, gyroEnabled: false, logoStyle: .ball)
+            launchBall(screen: screen, cursorGravityEnabled: false, logoStyle: .ball)
         case .freeDVD:
-            launchBall(screen: screen, gyroEnabled: false, logoStyle: .dvd)
+            launchBall(screen: screen, cursorGravityEnabled: false, logoStyle: .dvd)
         }
         showPutBackIcon = true
     }
@@ -67,9 +67,9 @@ class AppController {
 
     // MARK: - Ball / Free modes
 
-    private func launchBall(screen: NSScreen, gyroEnabled: Bool, logoStyle: Ball.LogoStyle) {
+    private func launchBall(screen: NSScreen, cursorGravityEnabled: Bool, logoStyle: Ball.LogoStyle) {
         _ = ballViewController.view
-        ballViewController.gyroEnabled = gyroEnabled
+        ballViewController.cursorGravityEnabled = cursorGravityEnabled
         ballViewController.logoStyle = logoStyle
         ballViewController.animateBallFromRect(screen.inferredRectOfHoveredDockIcon)
 
@@ -84,7 +84,7 @@ class AppController {
             self.ballWindowController.window!.setIsVisible(false)
             self.clickWindow.setIsVisible(false)
             self.ballViewController.sceneView.isPaused = true
-            self.ballViewController.gyroEnabled = false
+            self.ballViewController.cursorGravityEnabled = false
         }
     }
 

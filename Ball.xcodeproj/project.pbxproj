@@ -26,7 +26,6 @@
 		5F736CA7298226FF00997B93 /* MomentumValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F736CA6298226FF00997B93 /* MomentumValue.swift */; };
 		5F736CAA2982271A00997B93 /* Motion in Frameworks */ = {isa = PBXBuildFile; productRef = 5F736CA92982271A00997B93 /* Motion */; };
 		5F736CAC2982276200997B93 /* Ball.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F736CAB2982276200997B93 /* Ball.swift */; };
-		AABB0002000000000000AAAA /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AABB0001000000000000AAAA /* CoreMotion.framework */; };
 		AABB0004000000000000AAAA /* AppMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0003000000000000AAAA /* AppMode.swift */; };
 		AABB0006000000000000AAAA /* ModePickerWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0005000000000000AAAA /* ModePickerWindowController.swift */; };
 		AABB0008000000000000AAAA /* DVDViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB0007000000000000AAAA /* DVDViewController.swift */; };
@@ -54,7 +53,6 @@
 		5F736CA4298214FE00997B93 /* InnerShadow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InnerShadow.swift; sourceTree = "<group>"; };
 		5F736CA6298226FF00997B93 /* MomentumValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentumValue.swift; sourceTree = "<group>"; };
 		5F736CAB2982276200997B93 /* Ball.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ball.swift; sourceTree = "<group>"; };
-		AABB0001000000000000AAAA /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		AABB0003000000000000AAAA /* AppMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMode.swift; sourceTree = "<group>"; };
 		AABB0005000000000000AAAA /* ModePickerWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModePickerWindowController.swift; sourceTree = "<group>"; };
 		AABB0007000000000000AAAA /* DVDViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DVDViewController.swift; sourceTree = "<group>"; };
@@ -65,7 +63,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AABB0002000000000000AAAA /* CoreMotion.framework in Frameworks */,
 				5F736CAA2982271A00997B93 /* Motion in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

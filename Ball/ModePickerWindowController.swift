@@ -122,7 +122,7 @@ struct MainPickerView: View {
                 .foregroundColor(.white)
 
             HStack(spacing: 14) {
-                ModeCard(icon: "🏀", title: "Ball", description: "Bouncing ball with\ntilt sensing", action: onBall)
+                ModeCard(icon: "🏀", title: "Ball", description: "Bouncing ball with\ncursor gravity", action: onBall)
                 ModeCard(icon: "📀", title: "DVD", description: "Classic bouncing\nscreensaver", action: onDVD)
                 ModeCard(icon: "🎮", title: "Free", description: "Play with ball\nor DVD logo", action: onFree)
             }

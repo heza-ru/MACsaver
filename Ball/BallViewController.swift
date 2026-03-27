@@ -1,7 +1,6 @@
 import Cocoa
 import SpriteKit
 import SwiftUI
-import CoreMotion
 
 protocol BallViewControllerDelegate: AnyObject {
     func ballViewController(_ vc: BallViewController, ballDidMoveToPosition pos: CGRect)
@@ -27,32 +26,28 @@ class BallViewController: NSViewController {
     private var tempOverrideMouseCatcherRect: CGRect?
 
     var logoStyle: Ball.LogoStyle = .ball
-    var gyroEnabled = false {
+
+    // When true, gravity direction follows the mouse cursor position
+    var cursorGravityEnabled = false {
         didSet {
-            if gyroEnabled { startGyro() } else { stopGyro() }
-        }
-    }
-    private var motionManager: CMMotionManager?
-
-    private func startGyro() {
-        let manager = CMMotionManager()
-        guard manager.isAccelerometerAvailable else { return }
-        motionManager = manager
-        manager.accelerometerUpdateInterval = 1.0 / 60.0
-        manager.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
-            guard let data, let self else { return }
-            let strength: CGFloat = 980
-            self.scene.physicsWorld.gravity = CGVector(
-                dx: CGFloat(data.acceleration.x) * strength,
-                dy: CGFloat(data.acceleration.y) * strength
-            )
+            if !cursorGravityEnabled {
+                scene.physicsWorld.gravity = CGVector(dx: 0, dy: -980)
+            }
         }
     }
 
-    private func stopGyro() {
-        motionManager?.stopAccelerometerUpdates()
-        motionManager = nil
-        scene.physicsWorld.gravity = CGVector(dx: 0, dy: -980)
+    func updateCursorGravity() {
+        guard cursorGravityEnabled else { return }
+        let mouse = NSEvent.mouseLocation
+        guard let screen = NSScreen.main else { return }
+        // Map cursor position to gravity: edges pull stronger than center
+        let cx = (mouse.x - screen.frame.midX) / (screen.frame.width / 2)
+        let cy = (mouse.y - screen.frame.midY) / (screen.frame.height / 2)
+        let strength: CGFloat = 600
+        scene.physicsWorld.gravity = CGVector(
+            dx: cx * strength,
+            dy: cy * strength - 300
+        )
     }
 
     var ball: Ball? {
@@ -248,6 +243,7 @@ class BallViewController: NSViewController {
 
 extension BallViewController: SKSceneDelegate {
     func update(_ currentTime: TimeInterval, for scene: SKScene) {
+        updateCursorGravity()
         if let ball {
             delegate?.ballViewController(self, ballDidMoveToPosition: ball.rect)
         }
